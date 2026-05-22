@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from "react";
 
 const SUPABASE_URL = "https://dfhkdyypyqxbqitwuphx.supabase.co";
 const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRmaGtkeXlweXF4YnFpdHd1cGh4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk0NzMyMDgsImV4cCI6MjA5NTA0OTIwOH0.Gzm35ojyujuj5h3g-TJFakcKsqWuDoDkI4Mpxq3ifQA";
-const BRANCHES = ["Filial Centro", "Filial Sul", "Filial Norte"];
+const BRANCHES = ["Campinas", "Vila Nova SP", "Matriz Brasília"];
 
 const db = async (path, opts = {}) => {
   const res = await fetch(`${SUPABASE_URL}/rest/v1/${path}`, {
@@ -210,7 +210,7 @@ export default function App() {
         <div style={{ width: 360, background: "#1a0f0f", border: "1px solid #2a1a1a", borderRadius: 16, padding: 40 }}>
           <div style={{ textAlign: "center", marginBottom: 32 }}>
             <div style={{ fontSize: 48, marginBottom: 12 }}>🍷</div>
-            <div style={{ fontFamily: "'Times New Roman', serif", fontSize: 22, letterSpacing: 3, color: "#c9a96e" }}>CAVE & FILIAIS</div>
+            <div style={{ fontFamily: "'Times New Roman', serif", fontSize: 22, letterSpacing: 3, color: "#c9a96e" }}>VINHOS DO MUNDO</div>
             <div style={{ fontSize: 11, color: "#5a4a3a", letterSpacing: 2, marginTop: 4 }}>CONTROLE DE ESTOQUE</div>
           </div>
           <div style={{ display: "grid", gap: 14 }}>
@@ -263,7 +263,7 @@ export default function App() {
         <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
           <span style={{ fontSize: 26 }}>🍷</span>
           <div>
-            <div style={{ fontFamily: "'Times New Roman', serif", fontSize: 18, letterSpacing: 2, color: "#c9a96e" }}>CAVE & FILIAIS</div>
+            <div style={{ fontFamily: "'Times New Roman', serif", fontSize: 18, letterSpacing: 2, color: "#c9a96e" }}>VINHOS DO MUNDO</div>
             <div style={{ fontSize: 10, color: "#7a6a5a", letterSpacing: 1 }}>CONTROLE DE ESTOQUE</div>
           </div>
         </div>
