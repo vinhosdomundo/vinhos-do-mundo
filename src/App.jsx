@@ -232,9 +232,7 @@ export default function App() {
               color: "#c9a96e", borderRadius: 10, cursor: "pointer", fontSize: 14, letterSpacing: 2,
             }}>ENTRAR</button>
           </div>
-          <div style={{ marginTop: 24, fontSize: 11, color: "#3a2a1a", textAlign: "center" }}>
-            admin / admin123 &nbsp;·&nbsp; filial_centro / senha123
-          </div>
+
         </div>
       </div>
     );
