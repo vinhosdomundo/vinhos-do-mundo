@@ -29,6 +29,22 @@ const db = async (path, opts = {}) => {
 };
 
 const fmt = (n) => `R$ ${(n || 0).toFixed(2).replace(".", ",")}`;
+
+const uploadImage = async (file) => {
+  const ext = file.name.split(".").pop();
+  const fileName = `${Date.now()}.${ext}`;
+  const res = await fetch(`${SUPABASE_URL}/storage/v1/object/wine-images/${fileName}`, {
+    method: "POST",
+    headers: {
+      apikey: SUPABASE_KEY,
+      Authorization: `Bearer ${SUPABASE_KEY}`,
+      "Content-Type": file.type,
+    },
+    body: file,
+  });
+  if (!res.ok) throw new Error("Erro no upload");
+  return `${SUPABASE_URL}/storage/v1/object/public/wine-images/${fileName}`;
+};
 const fmtDate = (iso) => new Date(iso).toLocaleDateString("pt-BR");
 
 const S = {
@@ -183,7 +199,7 @@ function LoginScreen({ form, setForm, onLogin, error }) {
 
 function ProdutosTab({ screen, navigate, goBack, wines, stock, isAdmin, userBranch, loadData, showToast, selected, loading }) {
   const [search, setSearch] = useState("");
-  const [form, setForm] = useState({ name: "", type: "Tinto", region: "", year: new Date().getFullYear(), price: "", cost: "" });
+  const [form, setForm] = useState({ name: "", type: "Tinto", region: "", year: new Date().getFullYear(), price: "", cost: "", image_url: "" });
   const [movForm, setMovForm] = useState({ type: "Entrada", qty: 1, branch: userBranch, toBranch: "Campinas", obs: "" });
 
   const filtered = wines.filter(w => w.name.toLowerCase().includes(search.toLowerCase()) || w.type?.toLowerCase().includes(search.toLowerCase()));
@@ -192,7 +208,7 @@ function ProdutosTab({ screen, navigate, goBack, wines, stock, isAdmin, userBran
   const handleAddWine = async () => {
     if (!form.name.trim()) { showToast("Nome obrigatório", false); return; }
     try {
-      const [nw] = await db("wines", { method: "POST", body: JSON.stringify({ name: form.name.trim(), type: form.type, region: form.region, year: parseInt(form.year), price: parseFloat(form.price) || 0, cost: parseFloat(form.cost) || 0 }) });
+      const [nw] = await db("wines", { method: "POST", body: JSON.stringify({ name: form.name.trim(), type: form.type, region: form.region, year: parseInt(form.year), price: parseFloat(form.price) || 0, cost: parseFloat(form.cost) || 0, image_url: form.image_url || null }) });
       for (const b of BRANCHES) await db("stock", { method: "POST", body: JSON.stringify({ wine_id: nw.id, branch: b, quantity: 0 }) });
       showToast("Rótulo cadastrado!");
       await loadData();
@@ -265,6 +281,30 @@ function ProdutosTab({ screen, navigate, goBack, wines, stock, isAdmin, userBran
         <div style={S.section}>
           <div style={S.sectionLabel}>Safra</div>
           <input type="number" value={form.year} onChange={e => setForm(f => ({ ...f, year: e.target.value }))} style={S.input} />
+        </div>
+        <div style={S.section}>
+          <div style={S.sectionLabel}>Foto do Produto</div>
+          <label style={{ display: "block", cursor: "pointer" }}>
+            <input type="file" accept="image/*" style={{ display: "none" }} onChange={async (e) => {
+              const file = e.target.files[0];
+              if (!file) return;
+              try {
+                showToast("Enviando imagem...");
+                const url = await uploadImage(file);
+                setForm(f => ({ ...f, image_url: url }));
+                showToast("Imagem enviada!");
+              } catch { showToast("Erro no upload", false); }
+            }} />
+            <div style={{ borderRadius: 14, overflow: "hidden", background: CARD, border: `2px dashed ${form.image_url ? WINE : "#444"}`, height: 160, display: "flex", alignItems: "center", justifyContent: "center", flexDirection: "column", gap: 8 }}>
+              {form.image_url
+                ? <img src={form.image_url} alt="preview" style={{ width: "100%", height: "100%", objectFit: "contain" }} />
+                : <>
+                    <span style={{ fontSize: 40 }}>📷</span>
+                    <span style={{ color: "#888", fontSize: 14 }}>Toque para escolher uma foto</span>
+                  </>
+              }
+            </div>
+          </label>
         </div>
       </div>
     </div>
@@ -353,6 +393,11 @@ function ProdutosTab({ screen, navigate, goBack, wines, stock, isAdmin, userBran
           <div style={S.headerLeft}><button style={S.backBtn} onClick={goBack}>‹</button></div>
           <div style={S.headerTitle}>{selected.name}</div>
         </div>
+        {selected.image_url && (
+          <div style={{ margin: "0 16px 16px", borderRadius: 14, overflow: "hidden", height: 200, background: CARD }}>
+            <img src={selected.image_url} alt={selected.name} style={{ width: "100%", height: "100%", objectFit: "contain" }} />
+          </div>
+        )}
         <div style={S.section}>
           <div style={S.card}>
             <div style={S.row}><span style={{ color: TEXT2 }}>Tipo</span><span style={{ color: TEXT }}>{selected.type}</span></div>
@@ -400,16 +445,20 @@ function ProdutosTab({ screen, navigate, goBack, wines, stock, isAdmin, userBran
       )}
       {Object.keys(grouped).sort().map(letter => (
         <div key={letter}>
-          <div style={{ padding: "8px 20px 4px", color: TEXT2, fontSize: 13 }}>{letter}</div>
+          <div style={{ padding: "8px 20px 4px", color: "#aaaaaa", fontSize: 13, fontWeight: 600, letterSpacing: 1 }}>{letter}</div>
           <div style={{ ...S.card, margin: "0 16px", marginBottom: 8 }}>
             {grouped[letter].map((wine, i) => (
               <div key={wine.id} onClick={() => navigate("produto_detail", wine)} style={{ ...(i < grouped[letter].length - 1 ? S.row : S.rowLast), cursor: "pointer" }}>
                 <div style={S.rowLeft}>
-                  <div style={{ ...S.rowIcon, background: WINE_DARK }}>🍷</div>
+                  <div style={{ ...S.rowIcon, background: WINE_DARK, overflow: "hidden" }}>
+                    {wine.image_url ? <img src={wine.image_url} alt={wine.name} style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : <span style={{ fontSize: 20 }}>🍷</span>}
+                  </div>
                   <div>
                     <div style={S.rowTitle}>{wine.name}</div>
-                    <div style={{ color: WINE, fontSize: 13, display: "flex", alignItems: "center", gap: 6 }}>
-                      🛒 {isAdmin ? BRANCHES.reduce((a, b) => a + (stock[b]?.[wine.id] || 0), 0) : (stock[userBranch]?.[wine.id] || 0)} &nbsp; <span style={{ color: WINE }}>{fmt(wine.price)}</span>
+                    <div style={{ fontSize: 13, display: "flex", alignItems: "center", gap: 8, marginTop: 2 }}>
+                      <span style={{ color: "#ffffff", fontWeight: 600 }}>{stock[userBranch]?.[wine.id] || 0} un.</span>
+                      <span style={{ color: "#888" }}>·</span>
+                      <span style={{ color: "#e0e0e0" }}>{fmt(wine.price)}</span>
                     </div>
                   </div>
                 </div>
